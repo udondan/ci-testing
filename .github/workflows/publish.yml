@@ -88,12 +88,13 @@ jobs:
         uses: actions/checkout@v3
         if: ${{ github.event_name == 'workflow_dispatch' }}
         with:
-          ref: ${{ github.event.inputs.changelog }}
+          ref: ${{ github.event.inputs.release }}
           persist-credentials: false
           fetch-depth: 0
 
       - name: DEBUG
         run: |
+          echo ${{ github.event_name }}
           printenv
 
       - name: Create files
@@ -121,5 +122,5 @@ jobs:
           fi
           gh release upload $TAG ./artifacts/$NAME-$TARGET-$TAG.tar.gz
         env:
-          GITHUB_TOKEN: ${{ secrets.OVERRIDE_TOKEN }}
+          GH_TOKEN: ${{ secrets.OVERRIDE_TOKEN }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
