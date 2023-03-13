@@ -34,42 +34,8 @@ jobs:
           - TARGET: x86_64-unknown-linux-gnu # tested in a debian container on a mac
             OS: ubuntu-latest
 
-          # disabled, because ring package does not support musl
-          #- TARGET: x86_64-unknown-linux-musl # test in an alpine container on a mac
-          #  OS: ubuntu-latest
-
           - TARGET: aarch64-unknown-linux-gnu # tested on aws t4g.nano
             OS: ubuntu-latest
-
-          # disabled, because ring package does not support musl
-          #- TARGET: aarch64-unknown-linux-musl # tested on aws t4g.nano in alpine container
-          #  OS: ubuntu-latest
-
-          - TARGET: armv7-unknown-linux-gnueabihf # raspberry pi 2-3-4, not tested
-            OS: ubuntu-latest
-
-          # disabled, because ring package does not support musl
-          #- TARGET: armv7-unknown-linux-musleabihf # raspberry pi 2-3-4, not tested
-          #  OS: ubuntu-latest
-
-          - TARGET: arm-unknown-linux-gnueabihf # raspberry pi 0-1, not tested
-            OS: ubuntu-latest
-
-          # disabled, because ring package does not support musl
-          #- TARGET: arm-unknown-linux-musleabihf # raspberry pi 0-1, not tested
-          #  OS: ubuntu-latest
-
-          - TARGET: x86_64-apple-darwin # tested on a mac, is not properly signed so there are security warnings
-            OS: macos-latest
-          - TARGET: x86_64-pc-windows-msvc # tested on a windows machine
-            OS: windows-latest
-
-            # what about these?:
-            # aarch64-apple-darwin,
-            # i686-pc-windows-gnu,
-            # i686-pc-windows-msvc,
-            # i686-unknown-linux-gnu,
-            # x86_64-pc-windows-gnu,
 
     runs-on: ${{ matrix.OS }}
     env:
@@ -102,6 +68,14 @@ jobs:
       - name: Create files
         run: |
           mkdir -p ./artifacts
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ github.event.inputs.release }}"
+          elif [[ "${{ github.event_name }}" == "release" ]]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            echo "Unsupported event: ${{ github.event_name }}"
+            exit 1
+          fi
           echo test > ./artifacts/$NAME-$TARGET-$TAG.tar.gz
 
       - name: Archive artifact
@@ -113,16 +87,14 @@ jobs:
 
       - name: Upload release artifacts
         run: |
-          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-            echo "Not a release, skipping"
-            exit 0
-          fi
-          if [[ $GITHUB_REF_TYPE =~ ^tag$ ]]; then
-            TAG=$GITHUB_REF_NAME
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ github.event.inputs.release }}"
+          elif [[ "${{ github.event_name }}" == "release" ]]; then
+            TAG="${GITHUB_REF_NAME}"
           else
-            TAG=$GITHUB_SHA
+            echo "Unsupported event: ${{ github.event_name }}"
+            exit 1
           fi
           gh release upload $TAG ./artifacts/$NAME-$TARGET-$TAG.tar.gz
         env:
           GH_TOKEN: ${{ secrets.OVERRIDE_TOKEN }}
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
