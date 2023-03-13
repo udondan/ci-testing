@@ -70,7 +70,6 @@ jobs:
           mkdir -p ./artifacts
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             TAG="${{ github.event.inputs.release }}"
-          fi
           elif [[ "${{ github.event_name }}" == "release" ]]; then
             TAG="${GITHUB_REF_NAME}"
           else
@@ -90,7 +89,6 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             TAG="${{ github.event.inputs.release }}"
-          fi
           elif [[ "${{ github.event_name }}" == "release" ]]; then
             TAG="${GITHUB_REF_NAME}"
           else
