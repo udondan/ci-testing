@@ -12,9 +12,6 @@ on:
       release:
         description: Name of the release
         required: true
-  pull_request: # temporary, for testing
-    branches:
-      - main
 
 env:
   CARGO_TERM_COLOR: always
