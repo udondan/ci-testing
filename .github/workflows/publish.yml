@@ -8,10 +8,9 @@ on:
     types:
       - published
   workflow_dispatch:
-    inputs:
-      release:
-        description: Name of the release
-        required: true
+  pull_request: # for testing
+    branches:
+      - main
 
 env:
   CARGO_TERM_COLOR: always
