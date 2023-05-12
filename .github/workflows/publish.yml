@@ -26,7 +26,7 @@ jobs:
       run:
         shell: powershell
     steps:
-      - name: Generate chocolatey package
+      - name: Testing
         run: |
           echo "1: $Env:GITHUB_REF_NAME"
           echo "2: ${{ github.ref_name }}"
@@ -34,7 +34,9 @@ jobs:
           echo "4: $GITHUB_REF_NAME"
 
           $version = $Env:GITHUB_REF_NAME -replace '^v', ''
-          if ($version -notmatch '^v\d+\.\d+\.\d+$') {
+          echo "$version"
+
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
             $version = '9.9.9'
           }
 
