@@ -8,13 +8,11 @@ on:
     types:
       - published
   workflow_dispatch:
-    inputs:
-      release:
-        description: Name of the release
-        required: true
-
-env:
-  CARGO_TERM_COLOR: always
+  pull_request: # for testing, when we change the workflow
+    branches:
+      - main
+    paths:
+      - .github/workflows/publish.yml
 
 defaults:
   run:
@@ -22,51 +20,22 @@ defaults:
     shell: bash
 
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        # a list of all the targets
-        include:
-          - TARGET: x86_64-unknown-linux-gnu # tested in a debian container on a mac
-            OS: ubuntu-latest
-
-          - TARGET: aarch64-unknown-linux-gnu # tested on aws t4g.nano
-            OS: ubuntu-latest
-
-    runs-on: ${{ matrix.OS }}
-    env:
-      NAME: cfn-teleport
-      TARGET: ${{ matrix.TARGET }}
-      OS: ${{ matrix.OS }}
+  chocolatey-publish:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: powershell
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-
-      - name: DEBUG
+      - name: Generate chocolatey package
         run: |
-          echo ${{ github.event_name }}
-          echo GITHUB_REF_TYPE=$GITHUB_REF_TYPE
-          echo GITHUB_SHA=$GITHUB_SHA
-          printenv
+          echo "1: $Env:GITHUB_REF_NAME"
+          echo "2: ${{ github.ref_name }}"
+          echo "3: ${{env.GITHUB_REF_NAME}}"
+          echo "4: $GITHUB_REF_NAME"
 
-      - name: Create files
-        run: |
-          mkdir -p ./artifacts
-          echo test > "./artifacts/${NAME}-${TARGET}-${GITHUB_REF_NAME}.tar.gz"
+          $version = $Env:GITHUB_REF_NAME -replace '^v', ''
+          if ($version -notmatch '^v\d+\.\d+\.\d+$') {
+            $version = '9.9.9'
+          }
 
-      - name: Archive artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: result
-          path: |
-            ./artifacts
-
-      - name: Upload release artifacts
-        run: |
-          gh release upload "${GITHUB_REF_NAME}" "./artifacts/${NAME}-${TARGET}-${GITHUB_REF_NAME}.tar.gz"
-        env:
-          GH_TOKEN: ${{ secrets.OVERRIDE_TOKEN }}
+          echo "$version"
